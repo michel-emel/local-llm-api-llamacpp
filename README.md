@@ -1,17 +1,8 @@
-Here is a **clean, professional GitHub README** you can copy-paste directly for your repo **Local-LLM-API**.
-
-It is structured to clearly show that you built a **real llama.cpp-based LLM serving system**, not just a script.
-
----
-
-# 📄 README.md
-
-```md
 # 🚀 Local LLM API — Built with llama.cpp + FastAPI
 
 A lightweight, production-style **local LLM serving API** built on top of `llama.cpp` (via `llama-cpp-python`) and FastAPI.
 
-It enables fully offline inference of quantized GGUF models with an OpenAI-like chat interface, streaming support, and RAG-ready architecture.
+It enables fully offline inference of quantized GGUF models with an OpenAI-like chat interface, streaming support, and a RAG-ready architecture.
 
 ---
 
@@ -22,10 +13,11 @@ This project showcases how to build a complete **LLM inference backend system**,
 - ⚙️ Integration of `llama.cpp` via `llama-cpp-python`
 - 🚀 FastAPI-based inference server
 - 💬 Multi-turn chat memory (system / user / assistant format)
-- 🌊 Streaming token generation (SSE)
+- 🌊 Streaming token generation (Server-Sent Events)
 - 🧩 RAG-ready context injection pipeline
 - 🧠 Model-agnostic prompt engineering layer
 - 🖥️ Fully local inference (no external APIs required)
+- 🔌 Clean API design inspired by OpenAI chat format
 
 ---
 
@@ -34,53 +26,72 @@ This project showcases how to build a complete **LLM inference backend system**,
 This system runs **quantized GGUF models locally** using `llama.cpp`.
 
 ### Benefits:
-- Runs fully offline
+- Runs fully offline (no API cost)
 - Efficient CPU inference
-- Low memory usage (quantized models)
+- Low memory usage via quantization
 - Easy model swapping without changing API logic
 
 ---
 
 ## 📦 Project Structure
 
-```
-
+```bash
 llm_api/
 ├── main.py              # FastAPI entrypoint
 ├── requirements.txt
+├── .gitignore
 ├── models/
 │   └── phi2/
-│       └── phi-2.Q4_K_M.gguf
+│       └── phi-2.Q4_K_M.gguf   # (NOT pushed to GitHub)
 └── app/
-├── model.py         # LLM wrapper (llama-cpp-python)
-├── prompt.py        # Prompt builder (model-agnostic)
-├── schemas.py       # Pydantic request/response models
-└── memory.py        # Session memory (extendable to Redis)
+    ├── model.py        # LLM wrapper (llama-cpp-python)
+    ├── prompt.py       # Prompt builder (model-agnostic)
+    ├── schemas.py      # Pydantic request/response models
+    └── memory.py       # Session memory (extendable to Redis)
+```
 
-````
+---
+
+## ⚠️ Important Note (Models are NOT included)
+
+This repository does **NOT include model weights**.
+
+To download the model:
+
+```bash
+mkdir -p models/phi2
+
+huggingface-cli download TheBloke/phi-2-GGUF phi-2.Q4_K_M.gguf \
+  --local-dir models/phi2
+```
 
 ---
 
 ## ⚡ Features
 
 ### 💬 Chat API
-- Multi-turn conversation support
-- System / user / assistant roles
-- Optional conversation memory via `session_id`
+
+* Multi-turn conversation support
+* System / user / assistant roles
+* Optional session-based memory (extensible)
 
 ### 🌊 Streaming
-- Server-Sent Events (SSE) token streaming
+
+* Real-time token streaming via SSE
 
 ### 🧠 RAG Ready
-- Inject external context into prompts
-- Designed for vector DB integration (FAISS, Chroma, Qdrant)
 
-### 🔁 Model Agnostic
+* Context injection into prompts
+* Compatible with FAISS / Chroma / Qdrant pipelines
+
+### 🔁 Model Agnostic Design
+
 Supports multiple prompt formats:
-- Phi-2
-- Mistral
-- LLaMA-3
-- ChatML
+
+* Phi-2
+* Mistral
+* LLaMA-3
+* ChatML
 
 ---
 
@@ -90,18 +101,9 @@ Supports multiple prompt formats:
 
 ```bash
 pip install -r requirements.txt
-````
-
-### 2. Download model
-
-```bash
-mkdir -p models/phi2
-
-huggingface-cli download TheBloke/phi-2-GGUF phi-2.Q4_K_M.gguf \
-  --local-dir models/phi2
 ```
 
-### 3. Start server
+### 2. Start the API server
 
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
@@ -111,7 +113,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ## 📡 API Endpoints
 
-### 🟢 Health check
+### 🟢 Health Check
 
 ```http
 GET /health
@@ -125,10 +127,9 @@ Response:
   "model": "phi-2.Q4_K_M.gguf"
 }
 ```
-
 ---
 
-### 💬 Chat endpoint
+### 💬 Chat Endpoint
 
 ```http
 POST /chat
@@ -151,7 +152,7 @@ POST /chat
 
 ---
 
-### 🧠 Chat with RAG context
+### 🧠 Chat with RAG Context
 
 ```json
 {
@@ -165,7 +166,7 @@ POST /chat
 
 ---
 
-### 🌊 Streaming response
+### 🌊 Streaming Mode
 
 Set:
 
@@ -173,7 +174,7 @@ Set:
 "stream": true
 ```
 
-Response uses **Server-Sent Events (SSE)**:
+Response format (SSE):
 
 ```
 data: {"choices":[{"delta":{"content":"Hello"},"finish_reason":null}]}
@@ -181,16 +182,16 @@ data: {"choices":[{"delta":{"content":"Hello"},"finish_reason":null}]}
 
 ---
 
-## 🧪 Model Info
+## 🧪 Model Information
 
-* Model: Phi-2 (GGUF format)
+* Model: Phi-2 (GGUF)
 * Quantization: Q4_K_M
 * Context length: 2048 tokens
-* Backend: llama.cpp (via llama-cpp-python)
+* Backend: llama.cpp via llama-cpp-python
 
 ---
 
-## 🧠 Architecture Overview
+## 🧠 System Architecture
 
 ```
 Client → FastAPI → Prompt Builder → llama.cpp → Token Stream → Response
@@ -207,7 +208,20 @@ Client → FastAPI → Prompt Builder → llama.cpp → Token Stream → Respons
 * OpenAI-compatible `/v1/chat/completions`
 * Docker deployment
 * GPU acceleration (CUDA / Metal)
-* Vector DB integration (RAG pipeline)
+* Full RAG pipeline with vector database
+
+---
+
+## 🧼 Git Best Practice
+
+This project intentionally excludes large model files.
+
+Make sure you use:
+
+```bash
+git add .
+```
+ONLY after configuring `.gitignore` properly.
 
 ---
 
@@ -219,6 +233,5 @@ MIT License
 
 ## 👤 Author
 
-Built by Michel Emel
-Project: Local LLM Infrastructure with llama.cpp
-
+Built by Michel Emel  
+Project: Local LLM Infrastructure using llama.cpp + FastAPI
